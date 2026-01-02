@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>矩阵初等变换辅助学习工具</title>
+    <style>
+    :root {
+        --primary-color: #4a6fa5;
+        --secondary-color: #6b8cb7;
+        --accent-color: #e76f51;
+        --light-bg: #f8f9fa;
+        --dark-text: #333333;
+        --light-text: #ffffff;
+        --border-color: #ced4da;
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 16px;
+        background-color: #f0f4f8;
+        color: var(--dark-text);
+        line-height: 1.6;
+    }
+
+    h1 {
+        color: var(--primary-color);
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        body {
+            padding: 15px;
+            font-size: 14px;
+        }
+        
+        table {
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        
+        td {
+            padding: 6px;
+            width: 35px;
+        }
+
+        /* 只对输入组应用垂直布局，快捷符号保持横向 */
+        .input_group {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        /* 快捷符号部分保持横向排列 */
+        .operator_buttons:has(p) {
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* t_i_group 类在小屏幕上的调整 */
+        .t_i_group {
+            height: 38px;
+            padding: 8px 10px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        /* 快捷按钮在小屏幕上的调整 */
+        #button_change, #button_add, #button_sub, #button_mul {
+            padding: 8px 12px;
+            font-size: 14px;
+            margin: 0 3px 8px 0;
+        }
+
+        /* 输入组在小屏幕上的调整 */
+        .input_group {
+            gap: 8px;
+        }
+    }
+
+/* 更小屏幕的额外调整 */
+    @media (max-width: 480px) {
+        .t_i_group {
+            height: 36px;
+            padding: 6px 8px;
+            font-size: 13px;
+        }
+
+        /* 在更小屏幕上，快捷符号可能需要换行 */
+        .operator_buttons:has(p) {
+            flex-wrap: wrap;
+            gap: 3px;
+        }
+
+        #button_change, #button_add, #button_sub, #button_mul {
+            padding: 6px 10px;
+            font-size: 13px;
+            margin: 0 2px 6px 0;
+        }
+
+        .input_group {
+            gap: 6px;
+        }
+    }
+
+
+    table {
+        border-collapse: collapse;
+        margin: 20px auto;
+        box-shadow: var(--shadow);
+        background-color: white;
+        transition: var(--transition);
+    }
+
+    table:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    td {
+        border: 1px solid var(--border-color);
+        padding: 10px 12px;
+        text-align: center;
+        width: 50px;
+        transition: var(--transition);
+    }
+
+    td:hover {
+        background-color: #f1f7ff;
+    }
+
+    /* 行列标识样式 */
+    .row-label, .col-label {
+        font-weight: bold;
+        background-color: #e9ecef;
+        color: var(--primary-color);
+    }
+
+/* 错误弹窗样式 */
+    .error-popup {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #ff4757;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
+        max-width: 300px;
+        min-width: 200px;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .error-popup.show {
+        display: block;
+        opacity: 1;
+    }
+
+    .error-popup-content {
+        margin-right: 30px;
+        word-wrap: break-word;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .error-popup-close {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0;
+        width: 25px;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .error-popup-close:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+    }
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.error-popup-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.error-popup-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+}
+
+.error-popup-content {
+    padding-right: 25px;
+}
+
+/* 移除原有的错误样式 */
+.error {
+    display: none;
+}
+
+.info {
+    margin: 10px 0;
+    color: var(--primary-color);
+    padding: 8px 12px;
+    border-radius: 4px;
+    background-color: #f0f7ff;
+    border: 1px solid #cce0ff;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+input[type="text"] {
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+}
+
+button {
+    margin: 0 5px 10px 0;
+    padding: 10px 18px;
+    cursor: pointer;
+    background-color: var(--primary-color);
+    color: var(--light-text);
+    border: none;
+border-radius: 4px;
+    font-size: 15px;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+button:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button#button_compete {
+    background-color: #28a745;
+}
+
+button#button_compete:hover {
+    background-color: #218838;
+}
+
+button#undo, button#redo {
+    background-color: #6c757d;
+}
+
+button#undo:hover, button#redo:hover {
+    background-color: #5a6268;
+}
+
+button#button_reset {
+    background-color: #dc3545;
+}
+
+button#button_reset:hover {
+    background-color: #c82333;
+}
+
+.full {
+    width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    background-color: white;
+    padding: 20px;
+border-radius: 8px;
+    box-shadow: var(--shadow);
+    margin-top: 20px;
+}
+
+.t_i_group {
+    height: 42px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: var(--transition);
+}
+
+.t_i_group:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+}
+
+#translate_history {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    max-width: 100%;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    margin: 15px 0;
+    border: 1px solid #e9ecef;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.operator_buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.input_group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+#transform_target, #transform_param {
+    width: 140px;
+}
+
+#transform_operator {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+    transition: var(--transition);
+}
+
+#transform_operator:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+#result, #det {
+    width: 100%;
+    box-sizing: border-box;
+}
+.row-label button, .col-label button {
+    background: transparent;
+    color: var(--primary-color);
+    padding: 4px 8px;
+    margin: 0;
+    border: 1px dashed transparent;
+}
+
+.row-label button:hover, .col-label button:hover {
+    background-color: rgba(74, 111, 165, 0.1);
+    border-color: var(--primary-color);
+    transform: none;
+    box-shadow: none;
+}
+
+.shortcut_buttons {
+    display: flex;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.shortcut_buttons button {
+    padding: 8px 12px;
+    font-size: 16px;
+}
+
+.header_buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.matrix-container {
+    overflow-x: auto;
+    width: 100%;
+    margin: 15px 0;
+}
+
+
+</style>
+</head>
+<body>
+    <div class="input_group">
+        <input type="text" id="input" placeholder="请输入矩阵">
+        <button id="button_input">录入矩阵</button> 
+    </div>
+    <button id="button_example">生成示例行列式</button>
+    <button id="button_compete" style="display: none;">计算行列式的值</button>
+    <button id="button_reset">重置</button>
+    <div class="full hidden">
+        <div class="operator_buttons">
+            <div class="input_group">
+                <input type="text" id="transform_target" placeholder="目标行/列 (如 r1, c2)" class="t_i_group">
+                <select id="transform_operator" class="t_i_group">
+                    <option value="">选择操作</option>
+                    <option value="+">+</option>
+                    <option value="-">-</option>
+                    <option value="*">×</option>
+                    <option value="↔">↔</option>
+                </select>
+                <input type="text" id="transform_param" placeholder="参数 (如 r2, 3, 2*r3)" class="t_i_group">
+                <button id="button_translate" >执行初等变换</button>
+            </div>
+        </div>
+        <div class="operator_buttons">
+            <p>快捷符号</p>
+            <button id="button_change">↔</button>
+            <button id="button_add">+</button>
+            <button id="button_sub">−</button>
+            <button id="button_mul">×</button>
+        </div>
+        <p id="translate_history" >初等变换历史记录：</p>
+        <button id="undo" >撤销初等变换</button>
+        <button id="redo" >重做初等变换</button>
+        
+    </div>
+    <div id="result"></div>
+    <div id="det"></div>
+    <!-- 错误弹窗容器 -->
+    <div id="errorPopup" class="error-popup ">
+        <button class="error-popup-close" onclick="hideErrorPopup()">×</button>
+        <div class="error-popup-content" id="errorPopupContent"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.8.0/lib/browser/math.min.js"></script>
+    <script>
+        // 整体变量
+        var input_box = document.getElementById('input');
+        var button = document.getElementById('button_input');
+        var result_display = document.getElementById('result');
+        var det_display = document.getElementById('det');
+        var button_example = document.getElementById('button_example');
+        var button_compete = document.getElementById('button_compete');        
+        var button_reset = document.getElementById('button_reset');
+        //报错dom绑定
+        const errorPopup = document.getElementById('errorPopup');
+        const errorPopupContent = document.getElementById('errorPopupContent');
+        let autoHideTimer = null;
+        
+        // 初始化矩阵和变量
+        var matrix = [];
+        var row_count = 0;
+        var col_count = 0;
+        // 输入数据的函数
+        button.addEventListener('click', function () {
+            var matrix_true = true;
+            var error = '';
+            matrix = [];
+            row_count = 0;
+            col_count = 0;
+            translate_history_array = [];
+            translate_number = -1;
+            
+            
+            // 获取输入值并去除首尾空格
+            var input_value = input_box.value.trim();
+            
+// 重置显示区域（包括行列式结果）
+            result_display.innerHTML = '';          // 清空结果显示
+            det_display.innerHTML = '';             // 清空行列式显示
+            translate_history.innerHTML = '初等变换历史记录：';  // 重置历史记录显示
+            
+            if (input_value) {
+                // 转换全角标点符号为半角
+                input_value = fullwidth_to_haifwidth(input_value);
+                
+                // 使用分号分割每一行
+                var row_data = input_value.split(';');
+                
+                // 处理每一行
+                for (var row_i = 0; row_i < row_data.length; row_i++) {
+                    var current_row  = row_data[row_i].trim();
+                    if (current_row ) {
+                        // 使用逗号分割元素
+                        var element_array = current_row .split(',');
+                        var row_array = [];
+                        
+                        // 处理每个元素
+                        for (var col_j = 0; col_j < element_array.length; col_j++) {
+                            var current_element = element_array[col_j].trim();
+                            if (current_element) {
+                                // 检查是否为有效数字
+                                if (isNaN(parseFloat(current_element))) {
+                                    matrix_true = false;
+                                    error = '第' + (row_i + 1) + '行第' + (col_j + 1) + '个元素不是有效数字';
+                                    break;
+                                }
+                                // 将字符串转换为数字
+                                row_array.push(parseFloat(current_element));
+                            }
+                        }
+                        
+                        if (!matrix_true) break;
+                        
+                        if (row_array.length > 0) {
+                            // 检查列数是否一致
+                            if (matrix.length > 0 && row_array.length !== matrix[0].length) {
+                                matrix_true = false;
+                                error = '第' + (row_i + 1) + '行的列数与第1行不一致';
+                                break;
+                            }
+                            matrix.push(row_array);
+                        }
+                    }
+                }
+                
+                // 计算行数和列数
+                row_count = matrix.length;
+                if (row_count > 0) {
+                    col_count = matrix[0].length;
+                }
+                
+                // 检查矩阵是否有效
+                if (!matrix_true) {
+                    showErrorPopup('错误：' + error);
+                } else if (row_count === 0) {
+                    showErrorPopup('错误：未能解析出有效矩阵');
+                } else if (col_count === 0) {
+                    showErrorPopup('错误：矩阵的列数为0，不是有效矩阵');
+                } else {
+                    renderMatrix();
+                    
+                    console.log('矩阵：', matrix);
+                    console.log('行数：', row_count);
+                    console.log('列数：', col_count);
+
+                    document.getElementsByClassName('full')[0].classList.remove('hidden');
+                    button_compete.style.display = 'block';
+                    
+                }
+            } else {
+                showErrorPopup('错误：请输入内容');
+            }
+        });
+        
+        // 将全角字符转换为半角字符的函数
+        function fullwidth_to_haifwidth(text) {
+            var result = '';
+            for (var i = 0; i < text.length; i++) {
+                var char = text.charCodeAt(i);
+                if (char >= 65281 && char <= 65374) {
+                    result += String.fromCharCode(char - 65248);
+                } else if (char === 12288) {
+                    result += String.fromCharCode(32);
+                } else {
+                    result += text.charAt(i);
+                }
+            }
+            return result;
+        }
+        
+        //示例按钮点击方法
+        button_example.addEventListener('click', function () {
+            input_box.value = '';
+            input_box.value = '1,2,3;4,5,6;7,8,9;';
+            button.click();
+        });  
+        
+        //计算行列式按钮点击方法
+        button_compete.addEventListener('click', function () {
+            if (row_count === col_count) {
+                try {
+                    var determinant_value = math.det(matrix);
+                    det_display.innerHTML = '<div class="info">行列式的值为：' + determinant_value + '</div>';
+                } catch (e) {
+                    showErrorPopup('计算行列式时出错：' + e.message);
+                }
+            } else {
+                det_display.innerHTML = '<div class="info">只有方阵才能计算行列式，当前矩阵不是方阵</div>';
+            }
+        });
+        
+        // 重置按钮点击方法
+        button_reset.addEventListener('click', function () {
+            input_box.value = '';
+matrix = [];
+            row_count = 0;
+            col_count = 0;
+            result_display.innerHTML = '';
+            det_display.innerHTML = '';
+            button_compete.style.display = 'none';
+document.getElementsByClassName('full')[0].classList.add('hidden');
+            document.getElementById('transform_target').value = '';
+            document.getElementById('transform_operator').value = '';
+            document.getElementById('transform_param').value = '';
+            translate_history.innerHTML = '初等变换历史记录：';
+            translate_history_array = [];
+            translate_number = 0;
+        });
+        
+        //初等变换变量
+        var transform_target = document.getElementById('transform_target');
+        var transform_operator = document.getElementById('transform_operator');
+        var transform_param = document.getElementById('transform_param');
+        var button_translate = document.getElementById('button_translate');
+        var translate_history = document.getElementById('translate_history');
+        var translate_history_array = []; 
+        var button_undo = document.getElementById('undo');
+        var button_redo = document.getElementById('redo'); 
+        var translate_number = -1;
+        
+        // 在页面加载时绑定一次事件委托（替代renderMatrix中的循环绑定）
+        document.getElementById('result').addEventListener('click', function(e) {
+            const target = e.target;
+            // 判断是否点击了行/列标识按钮（ID以button_add_r或button_add_c开头）
+            if (target.id.startsWith('button_add_r') || target.id.startsWith('button_add_c')) {
+                const type = target.id.includes('r') ? 'r' : 'c';
+                const num = target.textContent.replace(type, ''); // 提取数字（如"r1"→"1"）
+                
+                if (transform_target.value.trim() === '') {
+                    transform_target.value += type + num;
+                } else {
+                    // 检查参数框中是否已经包含行列索引
+                    const currentParam = transform_param.value.trim();
+                    const rowColRegex = /[rc]\d+/g;
+                    const hasRowCol = rowColRegex.test(currentParam);
+                    
+                    if (hasRowCol) {
+                        // 如果已经包含行列索引，则替换最后一个行列索引
+                        const lastRowColMatch = currentParam.match(rowColRegex);
+                        if (lastRowColMatch && lastRowColMatch.length > 0) {
+                            const lastRowCol = lastRowColMatch[lastRowColMatch.length - 1];
+                            const lastIndex = currentParam.lastIndexOf(lastRowCol);
+                            transform_param.value = currentParam.substring(0, lastIndex) + type + num + currentParam.substring(lastIndex + lastRowCol.length);
+                        } else {
+                            transform_param.value += type + num;
+                        }
+                    } else {
+                        // 如果没有行列索引，直接添加
+                        transform_param.value += type + num;
+                    }
+                }
+            }
+        });
+
+        // 为执行初等变换按钮绑定事件
+        button_translate.addEventListener('click', function () {
+            // 清空错误信息（不再需要，因为使用弹窗）
+            // result_display.innerHTML = result_display.innerHTML.replace(/<div class="error">.*?<\/div>/g, '');
+            
+            // 获取三个部分的值
+            var target = transform_target.value.trim();
+            var operator = transform_operator.value;
+            var param = transform_param.value.trim();
+            
+            // 验证输入
+            if (!target || !operator || !param) {
+                showErrorPopup('错误：请填写完整的变换信息');
+                return;
+            }
+            
+            // 验证参数格式
+            var parsedParam = parseParam(param);
+            if (!parsedParam) {
+                showErrorPopup('错误：参数格式无效，请使用以下格式：<br>' +
+                    '- 行/列标识：r1, c2<br>' +
+                    '- 数字：3, 2.5<br>' +
+                    '- 数字乘以行/列：2*r3, 1.5*c2');
+                transform_param.value = '';  // 清空参数栏
+                return;
+            }
+            
+            // 执行变换
+            var transformStr = target + operator + param;
+            if (performElementaryTransformation(target, operator, param)) {
+                // 更新历史记录
+                translate_history_array.splice(translate_number + 1);
+                translate_history_array.push(transformStr);
+                translate_number = translate_history_array.length - 1;
+                updateHistoryDisplay();
+                
+                // 清空输入框
+                transform_target.value = '';
+                transform_operator.value = '';
+                transform_param.value = '';
+            }
+            
+            // 重新渲染矩阵
+            renderMatrix();
+        });
+
+        // 为快捷按钮绑定事件
+        document.getElementById('button_add').addEventListener('click', function() {
+            transform_operator.value = '+';
+        });
+        document.getElementById('button_sub').addEventListener('click', function() {
+            transform_operator.value = '-';
+        });
+        document.getElementById('button_mul').addEventListener('click', function() {
+            transform_operator.value = '*';
+        }); 
+        document.getElementById('button_change').addEventListener('click', function() {
+            transform_operator.value = '↔';
+        });
+        
+        // 解析行/列标识 (如 "r1" 解析为 {type: 'r', index: 0})
+        function parseRowCol(identifier) {
+            if (!identifier || identifier.length < 2) {
+                return null;
+            }
+            
+            var type = identifier[0].toLowerCase();
+            if (type !== 'r' && type !== 'c') {
+                return null;
+            }
+            
+            var index = parseInt(identifier.substring(1)) - 1;
+            if (isNaN(index) || index < 0) {
+                return null;
+            }
+            
+            return { type: type, index: index };
+        }
+        
+        // 解析参数 (可以是行/列标识，如 "r2"；数字，如 "3"；或数字乘以行/列，如 "2*r3")
+        function parseParam(param) {
+            // 首先检查参数是否包含无效字符或重复模式
+            if (!/^[rc0-9.*+\-\s]+$/.test(param) || 
+                /(r[0-9]+){2,}/.test(param) || 
+                /(c[0-9]+){2,}/.test(param) ||
+                /\*{2,}/.test(param)) {
+                return null;
+            }
+            // 检查是否是数字乘以行/列的形式
+            var parts = param.split('*');
+            if (parts.length === 2) {
+                var scalar = parseFloat(parts[0].trim());
+                if (!isNaN(scalar)) {
+                    var rowCol = parseRowCol(parts[1].trim());
+                    if (rowCol) {
+                        return { type: 'scalar_rowcol', scalar: scalar, rowCol: rowCol };
+                    }
+                }
+            }
+            
+            // 检查是否是行/列标识
+            var rowCol = parseRowCol(param);
+            if (rowCol) {
+                return { type: 'rowcol', rowCol: rowCol };
+            }
+            
+            // 检查是否是数字
+            var scalar = parseFloat(param);
+            if (!isNaN(scalar)) {
+                return { type: 'scalar', value: scalar };
+            }
+            
+            return null;
+        }
+        
+        // 执行初等变换的函数（三步式判断）
+        function performElementaryTransformation(targetStr, operator, paramStr) {
+            // 第一步：解析目标行/列
+            var target = parseRowCol(targetStr);
+            if (!target) {
+                showErrorPopup('错误：无效的目标行/列格式');
+                return false;
+            }
+            
+            // 第二步：解析参数
+            var param = parseParam(paramStr);
+            if (!param) {
+                showErrorPopup('错误：无效的参数格式');
+                return false;
+            }
+            
+            // 第三步：根据运算符执行相应变换
+            switch (operator) {
+                case '+':
+                case '-':
+                    return performAdditionTransformation(target, operator, param);
+                case '*':
+                    return performMultiplyTransformation(target, param);
+                case '↔':
+                    return performSwapTransformation(target, param);
+                default:
+                    showErrorPopup('错误：无效的运算符');
+                    return false;
+            }
+        }
+        
+        // 执行加法变换
+        function performAdditionTransformation(target, operator, param) {
+            // 加法/减法运算要求参数必须是行/列或数字乘以行/列
+            if (param.type !== 'rowcol' && param.type !== 'scalar_rowcol') {
+                showErrorPopup('错误：加法/减法运算需要行/列作为参数');
+                return false;
+            }
+            
+            var source = param.type === 'rowcol' ? param.rowCol : param.rowCol;
+            var scalar = param.type === 'scalar_rowcol' ? param.scalar : 1;
+            
+            // 根据运算符调整标量
+            if (operator === '-') {
+                scalar = -scalar;
+            }
+            
+            // 检查变换类型是否一致
+            if (target.type !== source.type) {
+                showErrorPopup('错误：行变换和列变换不能混合使用');
+                return false;
+            }
+            
+            // 检查行/列索引是否有效
+            if (target.type === 'r') {
+                if (target.index < 0 || target.index >= row_count || source.index < 0 || source.index >= row_count) {
+                    showErrorPopup('错误：无效的行索引');
+                    return false;
+                }
+                
+                // 执行行加法变换
+                for (var j = 0; j < col_count; j++) {
+                    matrix[target.index][j] += scalar * matrix[source.index][j];
+                }
+            } else {
+                if (target.index < 0 || target.index >= col_count || source.index < 0 || source.index >= col_count) {
+                    result_display.innerHTML += '<div class="error">错误：无效的列索引</div>';
+                    return false;
+                }
+                
+                // 执行列加法变换
+                for (var i = 0; i < row_count; i++) {
+                    matrix[i][target.index] += scalar * matrix[i][source.index];
+                }
+            }
+            
+            return true;
+        }
+        
+        // 执行乘法变换
+        function performMultiplyTransformation(target, param) {
+            // 乘法运算要求参数必须是数字
+            if (param.type !== 'scalar') {
+                showErrorPopup('错误：乘法运算需要数字作为参数');
+                return false;
+            }
+            
+            var scalar = param.value;
+            
+            // 检查标量是否为0
+            if (scalar === 0) {
+                showErrorPopup('错误：标量系数不能为0');
+                return false;
+            }
+            
+            // 检查行/列索引是否有效
+            if (target.type === 'r') {
+                if (target.index < 0 || target.index >= row_count) {
+                    showErrorPopup('错误：无效的行索引');
+                    return false;
+                }
+                
+                // 执行行乘法变换
+                for (var j = 0; j < col_count; j++) {
+                    matrix[target.index][j] *= scalar;
+                }
+            } else {
+                if (target.index < 0 || target.index >= col_count) {
+                    result_display.innerHTML += '<div class="error">错误：无效的列索引</div>';
+                    return false;
+                }
+                
+                // 执行列乘法变换
+                for (var i = 0; i < row_count; i++) {
+                    matrix[i][target.index] *= scalar;
+                }
+            }
+            
+            return true;
+        }
+        
+        // 执行交换变换
+        function performSwapTransformation(target, param) {
+            // 交换运算要求参数必须是行/列
+            if (param.type !== 'rowcol') {
+                showErrorPopup('错误：交换运算需要行/列作为参数');
+                return false;
+            }
+            
+            var source = param.rowCol;
+            
+            // 检查变换类型是否一致
+            if (target.type !== source.type) {
+                showErrorPopup('错误：行变换和列变换不能混合使用');
+                return false;
+            }
+            
+            // 检查行/列索引是否有效
+            if (target.type === 'r') {
+                if (target.index < 0 || target.index >= row_count || source.index < 0 || source.index >= row_count) {
+                    showErrorPopup('错误：无效的行索引');
+                    return false;
+                }
+                
+                // 执行行交换
+                var tempRow = matrix[target.index];
+                matrix[target.index] = matrix[source.index];
+                matrix[source.index] = tempRow;
+            } else {
+                if (target.index < 0 || target.index >= col_count || source.index < 0 || source.index >= col_count) {
+                    result_display.innerHTML += '<div class="error">错误：无效的列索引</div>';
+                    return false;
+                }
+                
+                // 执行列交换
+                for (var i = 0; i < row_count; i++) {
+                    var temp = matrix[i][target.index];
+                    matrix[i][target.index] = matrix[i][source.index];
+                    matrix[i][source.index] = temp;
+                }
+            }
+            
+            return true;
+        }
+        
+        // 撤销变换
+        button_undo.addEventListener('click', function () {
+            if (translate_number >= 0) {
+                var last_translate = translate_history_array[translate_number];
+                // 解析最后一次变换并执行相反操作
+                if (undoTransformation(last_translate)) {
+                    translate_number--;
+                    updateHistoryDisplay();
+                    renderMatrix();
+                }
+            }
+        });
+        
+        // 重做变换
+        button_redo.addEventListener('click', function () {
+            if (translate_number < translate_history_array.length - 1) {
+                translate_number++;
+                var next_translate = translate_history_array[translate_number];
+                // 解析并执行下一次变换
+                if (parseAndExecuteTransformation(next_translate)) {
+                    updateHistoryDisplay();
+                    renderMatrix()
+                }
+            }
+        });
+        // 解析并执行变换字符串
+        function parseAndExecuteTransformation(transformStr) {
+            // 简单解析变换字符串为三个部分
+            var operatorIndex = -1;
+            var operators = ['↔', '+', '-', '*'];
+            
+            for (var i = 0; i < operators.length; i++) {
+                operatorIndex = transformStr.indexOf(operators[i]);
+                if (operatorIndex !== -1) {
+                    break;
+                }
+            }
+            
+            if (operatorIndex === -1) {
+                return false;
+            }
+            
+            var target = transformStr.substring(0, operatorIndex);
+            var operator = transformStr.charAt(operatorIndex);
+            var param = transformStr.substring(operatorIndex + 1);
+            
+            return performElementaryTransformation(target, operator, param);
+        }
+        
+        // 撤销变换
+        function undoTransformation(transformStr) {
+            var operatorIndex = -1;
+            var operators = ['↔', '+', '-', '*'];
+            
+            for (var i = 0; i < operators.length; i++) {
+                operatorIndex = transformStr.indexOf(operators[i]);
+                if (operatorIndex !== -1) {
+                    break;
+                }
+            }
+            
+            if (operatorIndex === -1) {
+                return false;
+            }
+            
+            var target = transformStr.substring(0, operatorIndex);
+            var operator = transformStr.charAt(operatorIndex);
+            var param = transformStr.substring(operatorIndex + 1);
+            
+            // 根据不同操作计算相反操作
+            switch (operator) {
+                case '+':
+                    return performElementaryTransformation(target, '-', param);
+                case '-':
+                    return performElementaryTransformation(target, '+', param);
+                case '*':
+                    // 乘法的相反操作是乘以倒数
+                    var paramObj = parseParam(param);
+                    if (paramObj && paramObj.type === 'scalar') {
+                        var inverse = 1 / paramObj.value;
+                        return performElementaryTransformation(target, '*', inverse.toString());
+                    }
+                    return false;
+                case '↔':
+                    // 交换的相反操作是再次交换
+                    return performElementaryTransformation(target, '↔', param);
+                default:
+                    return false;
+            }
+        }
+        
+        function updateHistoryDisplay() {
+            if (translate_number < 0) {
+                translate_history.innerText = '初等变换历史记录：';
+                return;
+            }
+            // 只显示到当前步骤的历史记录
+            var displayHistory = translate_history_array.slice(0, translate_number + 1).join('; ');
+            translate_history.innerText = '初等变换历史记录：' + displayHistory;
+        }
+        
+        // 渲染矩阵的函数
+        function renderMatrix() {
+            // 生成表格HTML
+            var tableHTML = '<table>';
+            // 生成数据行和行标识
+            for (var row_i = 0; row_i < matrix.length; row_i++) {
+                tableHTML += '<tr>';
+                for (var col_j = 0; col_j < matrix[row_i].length; col_j++) {
+                    tableHTML += '<td>' + matrix[row_i][col_j] + '</td>';
+                }
+                // 添加行标识按钮
+                var rowId = "button_add_r" + (row_i + 1);
+                tableHTML += '<td class="row-label"><button id="' + rowId + '">r' + (row_i + 1) + '</button></td>';
+                tableHTML += '</tr>';
+            }
+            // 添加列标识行
+            tableHTML += '<tr>';
+            for (var col_j = 0; col_j < col_count; col_j++) {
+                // 添加列标识按钮
+                var colId = "button_add_c" + (col_j + 1);
+                tableHTML += '<td class="col-label"><button id="' + colId + '">c' + (col_j + 1) + '</button></td>';
+            }
+            tableHTML += '<td></td>';
+            tableHTML += '</tr>';
+            tableHTML += '</table>';
+            
+            // 显示行数和列数信息
+            var infoHTML = '<div class="info">矩阵维度：' + row_count + '×' + col_count + '</div>';
+            
+            // 更新显示
+            var currentHTML = result_display.innerHTML;
+            var matrixRegex = /转换后的矩阵：<br>.*?<div class="info">矩阵维度：.*?<\/div>/s;
+            if (matrixRegex.test(currentHTML)) {
+                result_display.innerHTML = currentHTML.replace(matrixRegex, '转换后的矩阵：<br>' + tableHTML + infoHTML);
+            } else {
+                result_display.innerHTML = '转换后的矩阵：<br>' + tableHTML + infoHTML;
+            }
+            
+
+        }
+        
+        // 错误弹窗函数
+        function showErrorPopup(message) {
+            const popup = document.getElementById('errorPopup');
+            const content = document.getElementById('errorPopupContent');
+            
+            // 清除之前的自动隐藏计时器
+            if (autoHideTimer) {
+                clearTimeout(autoHideTimer);
+            }
+            
+            // 设置错误信息
+            content.textContent = message;
+            
+            // 显示弹窗
+            popup.classList.add('show');
+            
+            // 设置5秒后自动隐藏
+            autoHideTimer = setTimeout(() => {
+                hideErrorPopup();
+            }, 5000);
+        }
+        
+                function hideErrorPopup() {
+            const popup = document.getElementById('errorPopup');
+            
+            // 清除计时器
+            if (autoHideTimer) {
+                clearTimeout(autoHideTimer);
+            }
+            
+            // 添加淡出效果
+            popup.style.opacity = '0';
+            
+            // 在淡出动画结束后隐藏元素
+            setTimeout(() => {
+                popup.classList.remove('show');
+                popup.style.opacity = '1'; // 重置透明度，为下次显示做准备
+            }, 300);
+        }
+        
+        
+    </script>
+</body>
+</html>
