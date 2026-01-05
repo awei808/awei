@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>下拉三角 - Border实现</title>
+    <style>
+        /* ===== 始终居中的Popup样式 ===== */
+#popup {
+    /* 定位设置 */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    /* 尺寸和布局 */
+    min-width: 300px;
+    max-width: 80%;
+    min-height: 150px;
+    max-height: 80vh;
+    
+    /* 样式设计 */
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border: 1px solid #e9ecef;
+    
+    /* 内边距和文本 */
+    padding: 24px;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #333;
+    
+    /* 层级和显示 */
+    z-index: 10000;
+    display: none;
+    box-sizing: border-box;
+    overflow: auto;
+}
+
+#popup.show {
+    display: block;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    #popup {
+        min-width: 280px;
+        max-width: 90%;
+        padding: 20px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    #popup {
+        min-width: 260px;
+        max-width: 95%;
+        padding: 16px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+}
+
+/* 可选：添加背景遮罩 */
+#popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: none;
+}
+
+#popup-overlay.show {
+    display: block;
+}
+/* ===== 始终居中的Popup样式 - 结束 ===== */
+    </style>
+</head>
+<body>
+    <button id="asd">asd</button>
+    <button id="dsa">dsa</button>
+
+<div id="popup">
+    <input type="text" id="input" placeholder="请输入矩阵与历史">
+    <button id="submit">提交</button>
+</div>
+</body>
+<script>    
+document.getElementById('asd').addEventListener('click', function() {
+    document.getElementById('popup').classList.add('show');
+})
+
+document.getElementById('dsa').addEventListener('click', function() {
+    // 隐藏弹窗
+document.getElementById('popup').classList.remove('show');
+})
+
+</script>
+</html>
